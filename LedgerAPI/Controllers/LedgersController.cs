@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using LedgerAPI.Data;
 using LedgerAPI.Models;
+using static LedgerAPI.Models.DtoUser;
 
 namespace LedgerAPI.Controllers
 {
@@ -23,9 +24,24 @@ namespace LedgerAPI.Controllers
 
         // GET: api/Ledgers
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Ledger>>> GetLedger()
+        public async Task<ActionResult<IEnumerable<LedgerDto>>> GetLedger()
         {
-            return await _context.Ledger.Include(l => l.Users).ToListAsync();
+            var ledgers = await _context.Ledger
+                .Include(l => l.Users)
+                .Select(l => new LedgerDto
+                {
+                    Id = l.Id,
+                    Description = l.Name,
+                    Users = l.Users.Select(u => new UserDto
+                    {
+                        Id = u.id,
+                        FirstName = u.FirstName,
+                        LastName = u.LastName
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            return Ok(ledgers);
         }
 
         // GET: api/Ledgers/5
